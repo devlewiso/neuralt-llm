@@ -4,6 +4,7 @@
   python main.py predecir ruta.json 0.2 0.9
   python main.py reporte saved/runs/<corrida>.jsonl   genera el PNG con curvas y llamadas al LLM
 """
+import os
 import sys
 from nn import Red
 from observe import Corrida, reporte_png
@@ -29,6 +30,7 @@ def entrenar_y_guardar(X, Y, ruta, corrida=None):
 
 
 if __name__ == "__main__":
+    os.makedirs("saved", exist_ok=True)
     cmd = sys.argv[1] if len(sys.argv) > 1 else "xor"
     if cmd == "xor":
         entrenar_y_guardar(*XOR, "saved/xor.json")
