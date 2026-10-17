@@ -1,5 +1,7 @@
 # neuralt-llm
 
+![neuralt-llm](docs/banner.png)
+
 Una red neuronal chica, entrenada con datos que genera un LLM, y un servidor local que muestra el entrenamiento en vivo.
 
 Es un proyecto educativo: sirve para ver cómo aprende una red, paso a paso, y cómo se relaciona con un LLM. No es un modelo de producción.
@@ -44,6 +46,8 @@ El comando `llm` pide ejemplos al LLM, entrena la red, guarda `saved/llm.json` y
 python serve.py                  # http://127.0.0.1:8765
 ```
 
+![Servidor en vivo](docs/servidor-en-vivo.png)
+
 Abrís la página, escribís la tarea y tocás **Entrenar**. La red se anima desde el primer momento, el contador muestra cuánto lleva esperando al LLM, y cuando llegan los ejemplos se dibujan los pesos, el mapa y la curva en vivo.
 
 ### Video de la red entrenada
@@ -81,9 +85,10 @@ OLLAMA_URL=http://127.0.0.1:11434 python main.py llm "tu tarea"
 - `llm.py`: el puente con el LLM (Ollama o Anthropic).
 - `observe.py`: registro de corridas y reporte visual.
 - `main.py`: comandos de línea (`xor`, `llm`, `predecir`, `reporte`).
-- `serve.py`: servidor en vivo con Server-Sent Events y la página del navegador.
+- `serve.py`: servidor en vivo con Server-Sent Events.
+- `pagina.html`: la página del servidor en vivo (red, mapa, curva, métricas y registro).
 - `render_red.py`: video vertical de la red entrenada.
-- `docs/`: capturas del README.
+- `docs/`: banner y capturas del README (`banner.html` es la fuente del banner).
 
 ## Limitaciones
 

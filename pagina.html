@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuralT en vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fondo: #06040E; --panel: #0B0818; --borde: #1F1840; --borde-campo: #2B2357;
+  --texto: #E6ECFF; --suave: #A3ACD4; --cian: #00E5FF; --cian-claro: #7FE9FF;
+  --magenta: #FF4FD0; --rosa: #FF7FDD; --ambar: #FFC24D; --verde: #5CF2A6;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--texto); font-family: 'Space Grotesk', system-ui, sans-serif; }
+a { color: var(--cian-claro); text-decoration: none; } a:hover { color: #fff; }
+.envoltura { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.marca { display: flex; align-items: center; gap: 12px; }
+.marca b { font-size: 22px; letter-spacing: -0.01em; }
+.etiqueta { font-family: var(--mono); font-size: 12px; color: var(--cian); border: 1px solid #1E3A55; border-radius: 6px; padding: 2px 6px; }
+nav { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; font-size: 15px; }
+.estado { display: flex; align-items: center; gap: 8px; background: #0E0B1F; border: 1px solid #241B45; border-radius: 999px; padding: 8px 14px; font-family: var(--mono); font-size: 13px; }
+.punto { width: 8px; height: 8px; border-radius: 999px; background: var(--suave); }
+.panel { background: var(--panel); border: 1px solid var(--borde); border-radius: 16px; padding: 18px; }
+.panel h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.nota { margin: 0; font-size: 13px; color: var(--suave); }
+form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.campo { flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+label { font-size: 13px; color: var(--suave); }
+input { width: 100%; min-height: 48px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--borde-campo); background: var(--fondo); color: var(--texto); font: inherit; font-size: 15px; }
+input:focus { outline: 2px solid var(--cian); outline-offset: 1px; }
+button { min-height: 48px; padding: 0 28px; border: 0; border-radius: 10px; background: var(--cian); color: #021018; font: inherit; font-weight: 700; font-size: 16px; box-shadow: 0 0 24px rgba(0,229,255,.35); cursor: pointer; }
+button:disabled { opacity: .45; box-shadow: none; cursor: progress; }
+.red { background: radial-gradient(ellipse at 50% 40%, #120A2E 0%, #08061A 70%); }
+.cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--suave); }
+.leyenda span { display: flex; align-items: center; gap: 6px; }
+.raya { width: 18px; height: 3px; border-radius: 2px; }
+canvas { display: block; width: 100%; }
+#red { height: 300px; margin-top: 8px; }
+.fila { display: flex; flex-wrap: wrap; gap: 20px; }
+.fila > .panel { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.eje { font-family: var(--mono); font-size: 11px; color: var(--suave); }
+.mapa-caja { display: flex; gap: 10px; }
+.eje-y { display: flex; flex-direction: column; justify-content: space-between; }
+.eje-y span:nth-child(2) { writing-mode: vertical-rl; transform: rotate(180deg); }
+.eje-x { display: flex; justify-content: space-between; margin-top: 6px; }
+#mapa { aspect-ratio: 1; border-radius: 10px; box-shadow: 0 0 30px rgba(0,200,255,.12); background: #141030; }
+.barra { display: flex; align-items: center; gap: 8px; }
+.barra i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #2A0A78, #00C8FF, #FFE14A); }
+#curva { height: 240px; }
+.metricas { flex: 1 1 260px; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; }
+.metricas h2 { grid-column: 1 / -1; margin: 0; font-size: 17px; font-weight: 600; }
+.dato { background: var(--panel); border: 1px solid var(--borde); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dato span { font-size: 12px; color: var(--suave); }
+.dato strong { font-family: var(--mono); font-weight: 400; font-size: 24px; overflow-wrap: anywhere; }
+.dato.ancho { grid-column: 1 / -1; }
+.dato.ancho strong { font-size: 16px; }
+#log { display: flex; flex-direction: column; gap: 8px; font-family: var(--mono); font-size: 13px; max-height: 240px; overflow: auto; }
+.linea { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.linea .t { flex: 0 0 52px; color: var(--suave); }
+.linea .chip { flex: 0 0 88px; text-align: center; border: 1px solid; border-radius: 6px; padding: 2px 0; }
+.linea .x { overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="envoltura">
+  <header>
+    <div class="marca">
+      <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><line x1="6" y1="10" x2="18" y2="6" stroke="#00E5FF" stroke-width="1.5"/><line x1="6" y1="10" x2="18" y2="30" stroke="#FF4FD0" stroke-width="1.5"/><line x1="6" y1="26" x2="18" y2="6" stroke="#FF4FD0" stroke-width="1.5"/><line x1="6" y1="26" x2="18" y2="30" stroke="#00E5FF" stroke-width="1.5"/><line x1="18" y1="6" x2="30" y2="18" stroke="#00E5FF" stroke-width="1.5"/><line x1="18" y1="30" x2="30" y2="18" stroke="#00E5FF" stroke-width="1.5"/><circle cx="6" cy="10" r="3.2" fill="#7FE9FF"/><circle cx="6" cy="26" r="3.2" fill="#7FE9FF"/><circle cx="18" cy="6" r="3.2" fill="#7FE9FF"/><circle cx="18" cy="30" r="3.2" fill="#7FE9FF"/><circle cx="30" cy="18" r="4.2" fill="#fff"/></svg>
+      <b>NeuralT</b><span class="etiqueta">LLM</span>
+    </div>
+    <nav aria-label="Principal">
+      <a href="#registro">Registro</a>
+      <a href="https://github.com/devlewiso/neuralt-llm#readme">Docs</a>
+      <a href="https://github.com/devlewiso/neuralt-llm">GitHub</a>
+      <div class="estado" role="status"><span class="punto" id="punto"></span><span id="estado">listo para entrenar</span></div>
+    </nav>
+  </header>
+
+  <form id="f" class="panel">
+    <div class="campo">
+      <label for="desc">Tarea para el LLM</label>
+      <input id="desc" value="Un NPC decide si huir (1) o pelear (0) segun su vida y la de su rival, ambas entre 0 y 1. Huye si su vida es baja comparada con la del rival.">
+    </div>
+    <button id="btn">Entrenar</button>
+  </form>
+
+  <section class="panel red" aria-labelledby="t-red">
+    <div class="cabeza">
+      <h2 id="t-red">Red <span style="font-family: var(--mono); color: var(--cian-claro)">2 → 8 → 1</span></h2>
+      <div class="leyenda">
+        <span><i class="raya" style="background: var(--cian)"></i>peso positivo</span>
+        <span><i class="raya" style="background: var(--magenta)"></i>peso negativo</span>
+        <span><i class="raya" style="width: 10px; height: 10px; border-radius: 999px; background: #fff"></i>señal</span>
+      </div>
+    </div>
+    <canvas id="red" role="img" aria-label="Red neuronal con 2 entradas, 8 neuronas ocultas y 1 salida"></canvas>
+  </section>
+
+  <div class="fila">
+    <section class="panel" aria-labelledby="t-mapa">
+      <h2 id="t-mapa">Mapa de respuesta</h2>
+      <p class="nota">Qué responde la red para cada combinación de entradas.</p>
+      <div class="mapa-caja">
+        <div class="eje eje-y"><span>1</span><span>entrada 2</span><span>0</span></div>
+        <div style="flex: 1; min-width: 0">
+          <canvas id="mapa" role="img" aria-label="Mapa de respuesta de la red"></canvas>
+          <div class="eje eje-x"><span>0</span><span>entrada 1</span><span>1</span></div>
+        </div>
+      </div>
+      <div class="eje barra"><span>0</span><i></i><span>1</span></div>
+    </section>
+
+    <section class="panel" aria-labelledby="t-curva">
+      <h2 id="t-curva">Curva de error</h2>
+      <p class="nota">MSE por época, escala logarítmica.</p>
+      <canvas id="curva" role="img" aria-label="Curva del error durante el entrenamiento"></canvas>
+    </section>
+
+    <section class="metricas" aria-labelledby="t-corrida">
+      <h2 id="t-corrida">Corrida</h2>
+      <div class="dato"><span>Época</span><strong id="m-epoca">—</strong></div>
+      <div class="dato"><span>Error (MSE)</span><strong id="m-mse" style="color: var(--cian)">—</strong></div>
+      <div class="dato"><span>Ejemplos válidos</span><strong id="m-validos">—</strong></div>
+      <div class="dato"><span>Latencia LLM</span><strong id="m-latencia" style="color: var(--rosa)">—</strong></div>
+      <div class="dato ancho"><span>Modelo</span><strong id="m-modelo">—</strong></div>
+    </section>
+  </div>
+
+  <section id="registro" class="panel" aria-labelledby="t-log" style="display: flex; flex-direction: column; gap: 12px">
+    <h2 id="t-log">Registro</h2>
+    <div id="log"></div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const COLORES = { tarea: '#A3ACD4', llm: '#FFC24D', llm_ok: '#FF7FDD', entreno: '#00E5FF', fin: '#5CF2A6', error: '#FF4FD0' };
+let snap = null, curva = [], inicio = 0, esperando = false;
+
+function tiempo() {
+  if (!inicio) return '00:00';
+  const s = Math.round((Date.now() - inicio) / 1000);
+  return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+function log(tipo, texto, color) {
+  const l = document.createElement('div'); l.className = 'linea';
+  const t = document.createElement('span'); t.className = 't'; t.textContent = tiempo();
+  const c = document.createElement('span'); c.className = 'chip'; c.textContent = tipo;
+  c.style.color = c.style.borderColor = color || COLORES[tipo] || '#A3ACD4';
+  const x = document.createElement('span'); x.className = 'x'; x.textContent = texto;
+  l.append(t, c, x); $('log').append(l); $('log').scrollTop = $('log').scrollHeight;
+}
+function estado(texto, color) { $('estado').textContent = texto; $('punto').style.background = color; $('punto').style.boxShadow = '0 0 10px ' + color; }
+
+function preparar(c) {
+  const g = c.getContext('2d'), w = c.clientWidth, h = c.clientHeight, r = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(w * r) || c.height !== Math.round(h * r)) { c.width = Math.round(w * r); c.height = Math.round(h * r); }
+  g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, w, h);
+  return [g, w, h];
+}
+
+function dibujarRed(t) {
+  const [g, w, h] = preparar($('red'));
+  const capas = [2, 8, 1];
+  const xs = capas.map((_, k) => 70 + k * (w - 140) / (capas.length - 1));
+  const pos = capas.map((n, k) => Array.from({ length: n }, (_, j) => [xs[k], n === 1 ? h / 2 : 26 + j * (h - 52) / (n - 1)]));
+  for (let L = 0; L < 2; L++) for (let i = 0; i < capas[L]; i++) for (let j = 0; j < capas[L + 1]; j++) {
+    const wt = snap ? snap.pesos[L][i][j] : 0.35 * Math.sin(i * 1.7 + j * 2.3 + L);
+    const [x1, y1] = pos[L][i], [x2, y2] = pos[L + 1][j];
+    const a = Math.min(1, 0.2 + Math.abs(wt) * 0.6), col = wt < 0 ? '255,79,208' : '0,229,255';
+    g.strokeStyle = `rgba(${col},${a})`; g.lineWidth = 1 + Math.min(2.2, Math.abs(wt) * 1.4);
+    g.shadowColor = `rgba(${col},0.8)`; g.shadowBlur = 8;
+    g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+    const s = (t * 0.6 + (i * 0.37 + j * 0.13 + L * 0.5) % 1) % 1;
+    g.shadowBlur = 0; g.fillStyle = 'rgba(255,255,255,0.9)';
+    g.beginPath(); g.arc(x1 + (x2 - x1) * s, y1 + (y2 - y1) * s, 3, 0, 7); g.fill();
+  }
+  pos.forEach((capa, k) => capa.forEach(([x, y]) => {
+    g.shadowColor = 'rgba(127,233,255,0.9)'; g.shadowBlur = 16;
+    g.fillStyle = k === 2 ? '#FFFFFF' : '#7FE9FF';
+    g.beginPath(); g.arc(x, y, k === 2 ? 16 : k === 0 ? 13 : 10, 0, 7); g.fill();
+  }));
+  g.shadowBlur = 0;
+}
+
+function colorMapa(v) {
+  v = Math.min(1, Math.max(0, v));
+  if (v < .5) { const k = v / .5; return [42 - 42 * k, 10 + 190 * k, 120 + 135 * k]; }
+  const k = (v - .5) / .5; return [255 * k, 200 + 25 * k, 255 - 181 * k];
+}
+function dibujarMapa() {
+  const [g, w, h] = preparar($('mapa'));
+  if (!snap) return;
+  const m = snap.mapa, n = m.length, cw = w / n, ch = h / n;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const [r, gg, b] = colorMapa(m[n - 1 - j][i]);
+    g.fillStyle = `rgb(${r | 0},${gg | 0},${b | 0})`;
+    g.fillRect(i * cw, j * ch, cw + 1, ch + 1);
+  }
+}
+
+function dibujarCurva() {
+  const [g, w, h] = preparar($('curva'));
+  const izq = 52, der = 12, arr = 12, aba = 26;
+  g.strokeStyle = '#1F1840'; g.lineWidth = 1;
+  for (let k = 0; k < 4; k++) { const y = arr + k * (h - arr - aba) / 3; g.beginPath(); g.moveTo(izq, y); g.lineTo(w - der, y); g.stroke(); }
+  g.font = '12px JetBrains Mono, monospace'; g.fillStyle = '#A3ACD4';
+  if (curva.length < 2) { g.fillText('esperando datos…', izq, h / 2); return; }
+  const lg = curva.map(p => Math.log10(Math.max(p.m, 1e-6)));
+  const max = Math.max(...lg), min = Math.min(...lg), ep = curva[curva.length - 1].e;
+  const X = e => izq + (w - izq - der) * e / Math.max(1, ep);
+  const Y = l => arr + (h - arr - aba) * (max - l) / Math.max(1e-9, max - min);
+  g.textAlign = 'right';
+  g.fillText(Math.pow(10, max).toPrecision(2), izq - 6, arr + 4);
+  g.fillText(Math.pow(10, min).toPrecision(2), izq - 6, h - aba + 4);
+  g.textAlign = 'left'; g.fillText('0', izq, h - 6);
+  g.textAlign = 'right'; g.fillText(ep + ' épocas', w - der, h - 6); g.textAlign = 'left';
+  g.strokeStyle = '#00E5FF'; g.lineWidth = 2.5; g.shadowColor = 'rgba(0,229,255,0.8)'; g.shadowBlur = 8;
+  g.beginPath(); curva.forEach((p, i) => { const x = X(p.e), y = Y(lg[i]); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
+  g.shadowBlur = 0; const u = curva.length - 1;
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(X(curva[u].e), Y(lg[u]), 4, 0, 7); g.fill();
+}
+
+function pintar() { dibujarMapa(); dibujarCurva(); }
+function bucle(ms) { dibujarRed(ms / 1000); requestAnimationFrame(bucle); }
+requestAnimationFrame(bucle);
+window.addEventListener('resize', pintar);
+setInterval(() => { if (esperando && inicio) estado('pidiendo ejemplos al LLM… ' + Math.round((Date.now() - inicio) / 1000) + ' s', '#FFC24D'); }, 1000);
+
+const es = new EventSource('/stream');
+es.onmessage = ev => {
+  const d = JSON.parse(ev.data);
+  if (d.type === 'tarea') {
+    curva = []; snap = null; inicio = Date.now(); esperando = true; $('log').textContent = '';
+    ['m-epoca', 'm-mse', 'm-validos', 'm-latencia', 'm-modelo'].forEach(id => $(id).textContent = '—');
+    $('btn').disabled = true; log('tarea', d.descripcion); pintar();
+  } else if (d.type === 'log') {
+    log(esperando ? 'llm' : 'entreno', d.texto);
+  } else if (d.type === 'llm_llamada') {
+    $('m-validos').textContent = d.validos + ' / ' + d.recibidos;
+    $('m-latencia').textContent = d.latencia_s + ' s';
+    $('m-modelo').textContent = d.modelo + ' · ' + d.backend;
+    log('llm', `${d.latencia_s} s · recibidos ${d.recibidos} · válidos ${d.validos} · descartados ${d.descartados}${d.error ? ' · ' + d.error : ''}`, COLORES.llm_ok);
+  } else if (d.type === 'estado') {
+    snap = d; esperando = false; curva.push({ e: d.epoca, m: d.mse });
+    $('m-epoca').textContent = d.epoca.toLocaleString('es');
+    $('m-mse').textContent = d.mse.toFixed(4);
+    estado('entrenando · época ' + d.epoca.toLocaleString('es'), '#00E5FF'); pintar();
+  } else if (d.type === 'fin') {
+    esperando = false; $('btn').disabled = false;
+    estado('terminado · ' + d.epocas.toLocaleString('es') + ' épocas', '#5CF2A6');
+    log('fin', d.epocas + ' épocas · MSE final ' + d.mse_final.toFixed(4) + ' · corrida ' + d.corrida);
+  } else if (d.type === 'error') {
+    esperando = false; $('btn').disabled = false;
+    estado('error', '#FF4FD0'); log('error', d.mensaje);
+  }
+};
+$('f').onsubmit = async e => {
+  e.preventDefault();
+  const r = await fetch('/iniciar', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ descripcion: $('desc').value }) });
+  if (!r.ok) { const j = await r.json(); log('error', 'No se pudo iniciar: ' + j.error); }
+};
+pintar();
+</script>
+</body>
+</html>
