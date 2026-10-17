@@ -51,7 +51,9 @@ def activaciones(entrada):
 
 fondo = Image.new("RGB", (W, H), (6, 4, 14))
 total = int(SEG * FPS)
-tmp = tempfile.mkdtemp(prefix="redviz-", dir=os.path.expanduser("~/proyectos/neuralt-llm/saved"))
+AQUI = os.path.dirname(os.path.abspath(__file__))
+os.makedirs(os.path.join(AQUI, "saved"), exist_ok=True)
+tmp = tempfile.mkdtemp(prefix="redviz-", dir=os.path.join(AQUI, "saved"))
 ruta_sweep = [(0.5 + 0.42 * math.cos(2 * math.pi * k / 240), 0.5 + 0.42 * math.sin(2 * math.pi * k / 240)) for k in range(240)]
 
 for fr in range(total):
