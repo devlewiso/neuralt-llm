@@ -1,17 +1,38 @@
-"""Puente con un LLM (API de Anthropic) para generar datos de entrenamiento.
+"""Puente con un LLM para generar datos de entrenamiento.
 
-Usa la variable de entorno ANTHROPIC_API_KEY. La clave nunca va en el código ni en el repo.
+Backends (variable NEURALT_BACKEND):
+  ollama     (por defecto) modelo local en el PC asgard, sin clave.
+             OLLAMA_URL = http://192.168.1.100:11434 por defecto.
+  anthropic  API de Anthropic. Necesita ANTHROPIC_API_KEY (nunca va en el código ni en el repo).
 """
 import json
 import os
 import re
 import urllib.request
 
+BACKEND = os.environ.get("NEURALT_BACKEND", "ollama")
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://192.168.1.100:11434")
 API_URL = "https://api.anthropic.com/v1/messages"
-MODELO = os.environ.get("NEURALT_MODELO", "claude-haiku-5-5")
+MODELO = os.environ.get("NEURALT_MODELO") or ("llama3.1:8b" if BACKEND == "ollama" else "claude-haiku-5-5")
+
+
+def preguntar_ollama(prompt, max_tokens=2000):
+    cuerpo = json.dumps({
+        "model": MODELO,
+        "prompt": prompt,
+        "stream": False,
+        "format": "json",
+        "options": {"num_predict": max_tokens, "temperature": 0.3},
+    }).encode("utf-8")
+    req = urllib.request.Request(f"{OLLAMA_URL}/api/generate", data=cuerpo,
+                                 headers={"content-type": "application/json"})
+    with urllib.request.urlopen(req, timeout=600) as r:
+        return json.load(r)["response"]
 
 
 def preguntar(prompt, max_tokens=2000):
+    if BACKEND == "ollama":
+        return preguntar_ollama(prompt, max_tokens)
     clave = os.environ.get("ANTHROPIC_API_KEY")
     if not clave:
         raise RuntimeError("Falta ANTHROPIC_API_KEY en el entorno.")
