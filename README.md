@@ -95,4 +95,4 @@ OLLAMA_URL=http://127.0.0.1:11434 python main.py llm "tu tarea"
 
 ## Licencia
 
-Todavía no tiene licencia definida.
+Licencia [MIT](LICENSE). Es software libre: podés usarlo, modificarlo y redistribuirlo.
