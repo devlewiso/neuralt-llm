@@ -29,8 +29,11 @@ class Red:
     def predecir(self, x):
         return self.forward(x)[-1]
 
-    def entrenar(self, X, Y, epocas=2000, lr=0.05, tol=None):
-        """Descenso de gradiente por lotes con backpropagation. Devuelve el historial de MSE."""
+    def entrenar(self, X, Y, epocas=2000, lr=0.05, tol=None, al_avanzar=None):
+        """Descenso de gradiente por lotes con backpropagation. Devuelve el historial de MSE.
+
+        al_avanzar(n, mse) se llama en cada época si se pasa.
+        """
         X, Y = np.asarray(X, dtype=float), np.asarray(Y, dtype=float)
         historial = []
         for _ in range(epocas):
@@ -38,6 +41,8 @@ class Red:
             err = acts[-1] - Y
             mse = float(np.mean(err ** 2))
             historial.append(mse)
+            if al_avanzar:
+                al_avanzar(len(historial), mse)
             if tol is not None and mse <= tol:
                 break
             delta = err * ACTIVACIONES[self.activaciones[-1]][1](acts[-1])

@@ -51,11 +51,15 @@ def preguntar(prompt, max_tokens=2000):
     return "".join(b.get("text", "") for b in respuesta["content"])
 
 
-def dataset_desde_llm(descripcion, entradas, salidas, n=40):
+def dataset_desde_llm(descripcion, entradas, salidas, n=40, observar=None):
     """Pide al LLM n ejemplos (entrada -> salida) para la tarea descrita.
 
     Devuelve (X, Y) listas de floats. Valida que cada ejemplo tenga el tamaño correcto.
+    observar(tipo, **datos) recibe las métricas de la llamada si se pasa.
     """
+    import time
+    inicio = time.time()
+    registro = {"modelo": MODELO, "backend": BACKEND, "pedidos": n}
     prompt = (
         f"{descripcion}\n\n"
         f"Genera exactamente {n} ejemplos. Cada entrada tiene {entradas} números entre 0 y 1; "
@@ -63,14 +67,30 @@ def dataset_desde_llm(descripcion, entradas, salidas, n=40):
         "Responde SOLO con un JSON así, sin texto extra:\n"
         '{"ejemplos": [{"in": [..], "out": [..]}, ...]}'
     )
-    texto = preguntar(prompt, max_tokens=4000)
-    bloque = re.search(r"\{.*\}", texto, re.S)
-    datos = json.loads(bloque.group(0))
-    X, Y = [], []
-    for ej in datos["ejemplos"]:
-        if len(ej["in"]) == entradas and len(ej["out"]) == salidas:
-            X.append([float(v) for v in ej["in"]])
-            Y.append([float(v) for v in ej["out"]])
-    if not X:
-        raise ValueError("El LLM no devolvió ejemplos válidos.")
+    error = None
+    X, Y, recibidos = [], [], 0
+    try:
+        texto = preguntar(prompt, max_tokens=4000)
+        bloque = re.search(r"\{.*\}", texto, re.S)
+        datos = json.loads(bloque.group(0))
+        recibidos = len(datos["ejemplos"])
+        for ej in datos["ejemplos"]:
+            if len(ej["in"]) == entradas and len(ej["out"]) == salidas:
+                X.append([float(v) for v in ej["in"]])
+                Y.append([float(v) for v in ej["out"]])
+        if not X:
+            error = "sin ejemplos válidos"
+    except Exception as e:
+        error = f"{type(e).__name__}: {e}"
+    registro.update({
+        "latencia_s": round(time.time() - inicio, 2),
+        "recibidos": recibidos,
+        "validos": len(X),
+        "descartados": recibidos - len(X),
+        "error": error,
+    })
+    if observar:
+        observar("llm_llamada", **registro)
+    if error:
+        raise ValueError(f"El LLM falló: {error}")
     return X, Y
